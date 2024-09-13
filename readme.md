@@ -1,7 +1,12 @@
-# @ahmetaltai/react-native-bottom-sheet
+## @ahmetaltai/react-native-bottom-sheet
 
 A highly efficient, stable, and customizable Bottom Sheet component for React Native. Designed to provide smooth performance with minimal configuration, this component is easy to integrate while offering extensive customization options for more complex use cases.
 
+[![npm version](https://badge.fury.io/js/@ahmetaltai%2Freact-native-bottom-sheet.svg)](https://badge.fury.io/js/@ahmetaltai%2Freact-native-bottom-sheet)
+
+![Bottom Sheet Preview](./example/assets/preview.gif)
+
+![Expo](https://img.shields.io/badge/expo-1C1E24?style=for-the-badge&logo=expo&logoColor=CB3837) ![React Native](https://img.shields.io/badge/react_native-%231C1E24.svg?style=for-the-badge&logo=react&logoColor=CB3837) ![TypeScript](https://img.shields.io/badge/typescript-%231C1E24.svg?style=for-the-badge&logo=typescript&logoColor=CB3837) ![NPM](https://img.shields.io/badge/NPM-%231C1E24.svg?style=for-the-badge&logo=npm&logoColor=CB3837) ![Yarn](https://img.shields.io/badge/yarn-%231C1E24.svg?style=for-the-badge&logo=yarn&logoColor=CB3837)
 ## Features
 
 - ⚡ **Fast and Stable:** Optimized for performance with minimal configuration.
@@ -96,5 +101,3 @@ Expands the Bottom Sheet to the maximum point defined in the `points` prop.
 - **`points`**: The `points` prop defines the draggable positions for the Bottom Sheet as percentages. For example, `['25%', '50%', '90%']` means the Bottom Sheet can be dragged between 25%, 50%, and 90% of the screen height.
 - **`visible`**: When `visible` is set, the Bottom Sheet stays open, and it does not close upon background taps. This is useful for cases where you want the sheet to remain open, allowing background touches.
 
-
-[![npm version](https://badge.fury.io/js/@ahmetaltai%2Freact-native-bottom-sheet.svg)](https://badge.fury.io/js/@ahmetaltai%2Freact-native-bottom-sheet)

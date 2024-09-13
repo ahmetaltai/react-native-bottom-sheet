@@ -60,6 +60,7 @@
   },
   "homepage": "https://github.com/ahmetaltai/react-native-bottom-sheet#readme",
   "publishConfig": {
+    "registry": "https://registry.npmjs.org",
     "@ahmetaltai:registry": "https://npm.pkg.github.com"
   },
   "devDependencies": {
@@ -181,5 +182,8 @@
     "type": "library",
     "version": "0.41.1"
   },
-  "types": "./lib/typescript/commonjs/src/index.d.ts"
+  "types": "./lib/typescript/commonjs/src/index.d.ts",
+  "dependencies": {
+    "@ahmetaltai/react-native-bottom-sheet": "^0.1.1"
+  }
 }
