@@ -1,0 +1,15 @@
+# Folders
+lib
+node_modules
+
+# Private Folders
+.yarn
+
+# Files
+yarn.lock
+package-lock.json
+
+# Private Files
+.env
+.tokens
+.DS_Store
