@@ -10,8 +10,33 @@ module.exports = function (api) {
   return getConfig(
     {
       presets: ['babel-preset-expo'],
-      plugins: ['react-native-reanimated/plugin'],
-
+      plugins: [
+        [
+          'module-resolver',
+          {
+            extensions: [
+              '.js',
+              '.jsx',
+              '.ts',
+              '.tsx',
+              '.ios.js',
+              '.ios.jsx',
+              '.ios.ts',
+              '.ios.tsx',
+              '.android.js',
+              '.android.jsx',
+              '.android.ts',
+              '.android.tsx',
+              '.json',
+            ],
+            alias: {
+              '@screens': './src/screens',
+              '@components': './src/components',
+              '@navigations': './src/navigations',
+            },
+          },
+        ],
+      ],
     },
     { root, pkg }
   );

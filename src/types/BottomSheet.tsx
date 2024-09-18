@@ -9,6 +9,8 @@ export interface BottomSheetProps {
   style?: BottomSheetStyles;
   children?: React.ReactNode;
   config?: BottomSheetConfig;
+  onPressBackdrop: () => {};
+  onChangePoint: (index: number) => {};
 }
 
 export interface BottomSheetStyles {

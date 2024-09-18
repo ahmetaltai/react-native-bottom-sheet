@@ -25,7 +25,6 @@ export const BottomSheetStyle = StyleSheet.create({
     },
     shadowOpacity: 0.9,
     shadowRadius: 10.0,
-
     elevation: 22,
   },
 });

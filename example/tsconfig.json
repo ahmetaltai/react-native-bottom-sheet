@@ -1,6 +1,10 @@
 {
-  "extends": "../tsconfig",
   "compilerOptions": {
-    // Avoid expo-cli auto-generating a tsconfig
+    "baseUrl": ".",
+    "paths": {
+      "@screens": ["src/screens"],
+      "@components": ["src/components"],
+      "@navigations": ["src/navigations"]
+    }
   }
 }

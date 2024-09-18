@@ -1,15 +1,18 @@
 # Folders
 lib
+cache
 node_modules
 
 # Private Folders
-.yarn
+.expo
 
 # Files
 yarn.lock
+lefthook.yml
 package-lock.json
 
 # Private Files
+*.gz
 .env
 .tokens
 .DS_Store

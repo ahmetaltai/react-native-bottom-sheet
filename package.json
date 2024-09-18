@@ -1,6 +1,6 @@
 {
-  "name": "@ahmetaltai/react-native-bottom-sheet",
-  "version": "0.1.1",
+  "name": "react-native-bottom-sheet",
+  "version": "0.1.2",
   "description": "A lightweight, flexible, and customizable bottom sheet package for React Native.",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
@@ -41,8 +41,7 @@
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli lib",
-    "prepare": "bob build",
-    "release": "release-it"
+    "prepare": "bob build"
   },
   "keywords": [
     "react-native",
@@ -60,8 +59,7 @@
   },
   "homepage": "https://github.com/ahmetaltai/react-native-bottom-sheet#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org",
-    "@ahmetaltai:registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^17.0.2",
@@ -173,6 +171,7 @@
       [
         "typescript",
         {
+          "project": "tsconfig.build.json",
           "esm": true
         }
       ]
@@ -180,10 +179,6 @@
   },
   "create-react-native-library": {
     "type": "library",
-    "version": "0.41.1"
-  },
-  "types": "./lib/typescript/commonjs/src/index.d.ts",
-  "dependencies": {
-    "@ahmetaltai/react-native-bottom-sheet": "^0.1.1"
+    "version": "0.41.2"
   }
 }

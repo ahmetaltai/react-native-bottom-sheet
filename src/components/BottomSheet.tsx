@@ -1,36 +1,36 @@
-import React, {
-  forwardRef,
-  useImperativeHandle,
+import {
   useRef,
   useState,
   useEffect,
+  forwardRef,
+  useImperativeHandle,
 } from 'react';
+import {
+  Animate,
+  GetThreshold,
+  ValidPercentage,
+  GetClosestPoint,
+} from '../utils/BottomSheetUtils';
 import { PercentageToPx } from '../helpers';
 import { BottomSheetStyle } from '../styles';
+import MemoizedContent from './MemoizedContent';
 import type { BottomSheetProps } from '../types';
 import { GestureIndicator } from './GestureIndicator';
-import { Animated, View, Dimensions, PanResponder } from 'react-native';
+import { Animated, View, PanResponder, Dimensions } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('screen');
 
-const BottomSheet = forwardRef((props: BottomSheetProps, ref) => {
-  // Points prop kontrolü
-  if (
-    !props.points ||
-    !Array.isArray(props.points) ||
-    props.points.length === 0
-  ) {
+// Helper functions for validation
+const validateProps = (props: BottomSheetProps) => {
+  const { points, index } = props;
+
+  if (!points || !Array.isArray(points) || points.length === 0) {
     throw new Error(
       "The 'points' prop is required and should be a non-empty array."
     );
   }
 
-  const ValidPercentage = (value: string) => {
-    const percentageRegex = /^(\d+)%$/;
-    return percentageRegex.test(value);
-  };
-
-  props.points.forEach((point) => {
+  points.forEach((point) => {
     if (!ValidPercentage(point)) {
       throw new Error(
         `Invalid point format: '${point}'. All points should be in the percentage format (e.g., '70%').`
@@ -38,83 +38,99 @@ const BottomSheet = forwardRef((props: BottomSheetProps, ref) => {
     }
   });
 
-  // Index prop kontrolü
   if (
-    props.index === undefined ||
-    typeof props.index !== 'number' ||
-    props.index < 0 ||
-    props.index >= props.points.length
+    index === undefined ||
+    typeof index !== 'number' ||
+    index < 0 ||
+    index >= points.length
   ) {
     throw new Error(
       "The 'index' prop is required and must be a valid number within the range of points."
     );
   }
+};
 
-  const [BottomSheetVisible, SetBottomSheetVisible] = useState(
-    props.visible ? true : false
-  );
-  const [PixelPoints, SetPixelPoints] = useState<number[]>([]);
+const BottomSheet = forwardRef((props: BottomSheetProps, ref) => {
+  const { points, index, visible, onChangePoint, style, config } = props;
+
+  validateProps(props);
+
+  const [isVisible, setIsVisible] = useState(!!visible);
+  const [pixelPoints, setPixelPoints] = useState<number[]>([]);
   const BottomSheetTranslate = useRef(
-    new Animated.Value(
-      props.visible ? PercentageToPx(props.visible) : SCREEN_HEIGHT
-    )
+    new Animated.Value(visible ? PercentageToPx(points[index]) : SCREEN_HEIGHT)
   ).current;
-  const LastTranslate: any = useRef(SCREEN_HEIGHT);
+  const LastTranslate = useRef(SCREEN_HEIGHT);
+  const lastSentPoint = useRef<number | null>(null); // Store the last sent point index
 
   useEffect(() => {
-    const points = props.points.map(PercentageToPx);
+    setPixelPoints(points.map(PercentageToPx));
+  }, [points]);
 
-    if (props.visible) {
-      points.push(PercentageToPx(props.visible));
+  const getClosestPointIndex: any = (currentValue: number) =>
+    pixelPoints.indexOf(GetClosestPoint(pixelPoints, currentValue)) ?? -1;
+
+  const animateTo = (target: number, callback?: () => void) =>
+    Animate(BottomSheetTranslate, target, () => {
+      LastTranslate.current = target;
+      callback?.();
+    });
+
+  const handleChangePoint = (closestIndex: number) => {
+    if (closestIndex !== lastSentPoint.current) {
+      lastSentPoint.current = closestIndex;
+      onChangePoint?.(closestIndex);
     }
-
-    SetPixelPoints(points);
-  }, [props.points, props.visible]);
-
-  const Animate = (toValue: any, callback?: () => void) => {
-    if (LastTranslate.current === toValue) return;
-    Animated.spring(BottomSheetTranslate, {
-      toValue,
-      useNativeDriver: true,
-      stiffness: 120,
-      damping: 25,
-      mass: 0.5,
-      overshootClamping: true,
-    }).start(callback);
   };
 
   const open = () => {
-    SetBottomSheetVisible(true);
-    Animate(
-      PixelPoints[props.index],
-      () => (LastTranslate.current = PixelPoints[props.index])
+    setIsVisible(true);
+    animateTo(pixelPoints[index] ?? SCREEN_HEIGHT, () =>
+      handleChangePoint(getClosestPointIndex(pixelPoints[index]))
     );
   };
 
   const expand = () => {
-    SetBottomSheetVisible(true);
-    Animate(
-      Math.min(...PixelPoints),
-      () => (LastTranslate.current = Math.min(...PixelPoints))
+    setIsVisible(true);
+    const minPoint = Math.min(...pixelPoints);
+    animateTo(minPoint, () =>
+      handleChangePoint(getClosestPointIndex(minPoint))
     );
   };
 
   const close = () => {
-    const CloseValue = props.visible
-      ? PercentageToPx(props.visible)
-      : SCREEN_HEIGHT;
+    animateTo(SCREEN_HEIGHT, () => setIsVisible(false));
+    handleChangePoint(-1);
+  };
 
-    if (LastTranslate.current === CloseValue) return;
+  const snap = (targetIndex: number) => {
+    if (targetIndex < 0 || targetIndex >= points.length) {
+      console.error(
+        `Invalid index: ${targetIndex}. It should be between 0 and ${points.length - 1}.`
+      );
+      return;
+    }
 
-    Animate(CloseValue, () => {
-      LastTranslate.current = CloseValue;
-      if (!props.visible) {
-        SetBottomSheetVisible(false);
-      }
+    if (pixelPoints.length === 0) {
+      console.error('Pixel points are not initialized yet.');
+      return;
+    }
+
+    const targetPoint = pixelPoints[targetIndex];
+    if (targetPoint === undefined) {
+      console.error(
+        `Invalid target point at index ${targetIndex}. Pixel points: ${pixelPoints}`
+      );
+      return;
+    }
+
+    setIsVisible(true);
+    animateTo(targetPoint, () => {
+      handleChangePoint(targetIndex);
     });
   };
 
-  useImperativeHandle(ref, () => ({ open, close, expand }));
+  useImperativeHandle(ref, () => ({ open, close, expand, snap }));
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
@@ -124,57 +140,62 @@ const BottomSheet = forwardRef((props: BottomSheetProps, ref) => {
         (value) => (LastTranslate.current = value)
       ),
     onPanResponderMove: (evt, gestureState) => {
-      const deltaY = LastTranslate.current + gestureState.dy;
-      if (Math.abs(gestureState.dy) > 5) {
-        BottomSheetTranslate.setValue(deltaY);
-      }
+      let deltaY = LastTranslate.current + gestureState.dy;
+      const [minPoint, maxPoint] = [
+        Math.min(...pixelPoints),
+        Math.max(...pixelPoints),
+      ];
+
+      if (deltaY < minPoint) deltaY = minPoint - (minPoint - deltaY) / 3;
+      BottomSheetTranslate.setValue(deltaY);
     },
     onPanResponderRelease: (evt, { dy }) => {
       const finalTranslateY = LastTranslate.current + dy;
       const [minPoint, maxPoint] = [
-        Math.min(...PixelPoints),
-        Math.max(...PixelPoints),
+        Math.min(...pixelPoints),
+        Math.max(...pixelPoints),
       ];
 
       if (finalTranslateY < minPoint) {
-        Animate(minPoint, () => (LastTranslate.current = minPoint));
-      } else if (
-        finalTranslateY >
-        (props.visible ? PercentageToPx(props.visible) : maxPoint + 50)
-      ) {
+        animateTo(minPoint, () =>
+          handleChangePoint(getClosestPointIndex(minPoint))
+        );
+      } else if (finalTranslateY > maxPoint) {
         close();
       } else {
-        const closestPoint = PixelPoints.reduce((prev, curr) =>
-          Math.abs(curr - finalTranslateY) < Math.abs(prev - finalTranslateY)
-            ? curr
-            : prev
-        );
-        Animate(closestPoint, () => (LastTranslate.current = closestPoint));
+        const closestPoint = GetClosestPoint(pixelPoints, finalTranslateY);
+        const threshold = GetThreshold();
+
+        if (Math.abs(finalTranslateY - closestPoint) < threshold) {
+          animateTo(closestPoint, () =>
+            handleChangePoint(getClosestPointIndex(closestPoint))
+          );
+        } else {
+          animateTo(LastTranslate.current);
+        }
       }
     },
   });
 
-  const BackdropOpacity = BottomSheetTranslate.interpolate({
-    inputRange: [
-      PercentageToPx(props.points[props.points.length - 1]),
-      SCREEN_HEIGHT,
-    ],
-    outputRange: [props.style?.backdrop?.opacity || 0.5, 0],
-    extrapolate: 'clamp',
-  });
-
-  if (!BottomSheetVisible) return null;
+  if (!isVisible) return null;
 
   return (
     <View style={BottomSheetStyle.Container} pointerEvents="box-none">
-      {!props.visible ? (
+      {!visible ? (
         <Animated.View
-          onTouchStart={close}
+          onTouchStart={props.onPressBackdrop || close}
           style={[
             BottomSheetStyle.Backdrop,
             {
-              opacity: BackdropOpacity,
-              backgroundColor: props.style?.backdrop?.background || 'black',
+              opacity: BottomSheetTranslate.interpolate({
+                inputRange: [
+                  PercentageToPx(points[points.length - 1]),
+                  SCREEN_HEIGHT,
+                ],
+                outputRange: [style?.backdrop?.opacity || 0.5, 0],
+                extrapolate: 'clamp',
+              }),
+              backgroundColor: style?.backdrop?.background || 'black',
             },
           ]}
         />
@@ -182,18 +203,17 @@ const BottomSheet = forwardRef((props: BottomSheetProps, ref) => {
       <Animated.View
         style={[
           BottomSheetStyle.Sheet,
-          props.style?.sheet.shadow &&
-          props.config?.indicatorposition === 'under'
+          config?.indicatorposition === 'under' && style?.sheet.shadow
             ? BottomSheetStyle.Shadow
             : null,
           {
             transform: [{ translateY: BottomSheetTranslate }],
             backgroundColor:
-              props.config?.indicatorposition === 'under'
-                ? props.style?.sheet?.background || 'white'
+              config?.indicatorposition === 'under'
+                ? style?.sheet?.background || 'white'
                 : 'transparent',
-            borderTopStartRadius: props.style?.sheet?.radius || 16,
-            borderTopEndRadius: props.style?.sheet?.radius || 16,
+            borderTopStartRadius: style?.sheet?.radius || 16,
+            borderTopEndRadius: style?.sheet?.radius || 16,
           },
         ]}
       >
@@ -202,26 +222,6 @@ const BottomSheet = forwardRef((props: BottomSheetProps, ref) => {
         </View>
         <MemoizedContent props={props} />
       </Animated.View>
-    </View>
-  );
-});
-
-const MemoizedContent = React.memo(({ props }: { props: BottomSheetProps }) => {
-  return (
-    <View
-      style={[
-        BottomSheetStyle.Content,
-        props.style?.sheet.shadow && props.config?.indicatorposition === 'over'
-          ? BottomSheetStyle.Shadow
-          : null,
-        {
-          backgroundColor: props.style?.sheet?.background || 'white',
-          borderTopStartRadius: props.style?.sheet?.radius || 12,
-          borderTopEndRadius: props.style?.sheet?.radius || 12,
-        },
-      ]}
-    >
-      {props.children}
     </View>
   );
 });
